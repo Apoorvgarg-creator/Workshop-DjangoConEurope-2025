@@ -1,0 +1,42 @@
+groups:
+  - name: django_alerts
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "More than 5% of requests are failing with 5xx errors"
+      
+      # Slow Response Time Alert
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, endpoint)) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response times detected"
+          description: "95th percentile of response time for {{ $labels.endpoint }} is above 1 second"
+      
+      # Memory Leak Detection
+      - alert: PossibleMemoryLeak
+        expr: delta(app_memory_usage_bytes[10m]) > 1024 * 1024 * 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible memory leak detected"
+          description: "Memory usage increased by more than 50MB in the last 10 minutes"
+
+      # Database Query Time Alert
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket[5m])) by (le, query_type, table)) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile of query time for {{ $labels.query_type }} on {{ $labels.table }} is above 0.5 seconds"

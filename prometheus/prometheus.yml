@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Rule files (alerts)
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+scrape_configs:
+  # Django app metrics
+  - job_name: django
+    scrape_interval: 5s
+    static_configs:
+      # - targets: ['web:8000']
+      - targets: ['docker.for.mac.localhost:8000']
+        labels:
+          service: django-app
+    
+    # Use metrics path from django-prometheus
+    metrics_path: /metrics
+  
+  # Prometheus self-scraping
+  - job_name: prometheus
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['prometheus:9090']
+        labels:
+          service: prometheus
+  
+  # PushGateway
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']
+        labels:
+          service: pushgateway
